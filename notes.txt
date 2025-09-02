@@ -1,0 +1,14 @@
+Your system has 5 main functions:
+Grocery store outreach - Find stores and email them about food donations
+Volunteer management - Website for volunteer signup (name, role: driver/packer, date)
+Calendar coordination - Track delivery days and volunteer assignments
+Location management - Find packing locations for truck unloading
+Food kitchen coordination - Find kitchens in Bronx/Northern Manhattan and coordinate deliveries
+
+
+tools/
+├── database.js        // Read/write volunteer DB
+├── emailSender.js     // Send emails to stores/kitchens
+├── webSearch.js       // Search for stores/kitchens (if needed as separate tool)
+├── calendarManager.js // Manage delivery schedules
+└── volunteerManager.js // Handle volunteer assignments
