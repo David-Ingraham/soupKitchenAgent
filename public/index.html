@@ -10,15 +10,111 @@
             margin: 0;
             padding: 20px;
             background-color: #f5f5f5;
+            display: flex;
+            gap: 20px;
+            height: 100vh;
+            box-sizing: border-box;
         }
         
         .container {
-            max-width: 800px;
-            margin: 0 auto;
+            flex: 1;
             background: white;
             border-radius: 12px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 40px);
+        }
+        
+        .db-panel {
+            flex: 1;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 40px);
+        }
+        
+        .db-header {
+            background: #059669;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .db-content {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+        }
+        
+        .db-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 12px;
+        }
+        
+        .db-table th {
+            background: #f3f4f6;
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            text-align: left;
+            font-weight: bold;
+        }
+        
+        .db-table td {
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            word-break: break-word;
+        }
+        
+        .db-section {
+            margin-bottom: 20px;
+        }
+        
+        .db-section h3 {
+            margin: 0 0 10px 0;
+            color: #374151;
+            font-size: 14px;
+        }
+        
+        .query-display {
+            background: #1f2937;
+            color: #10b981;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin: 15px 0;
+            word-break: break-all;
+        }
+        
+        .query-label {
+            font-size: 12px;
+            font-weight: bold;
+            color: #374151;
+            margin: 15px 0 5px 0;
+        }
+        
+        .before-after {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .before-after > div {
+            flex: 1;
+        }
+        
+        .before-after h4 {
+            margin: 0 0 5px 0;
+            font-size: 12px;
+            color: #6b7280;
         }
         
         .header {
@@ -29,7 +125,7 @@
         }
         
         .chat-container {
-            height: 500px;
+            flex: 1;
             overflow-y: auto;
             padding: 20px;
             border-bottom: 1px solid #e5e7eb;
@@ -158,7 +254,145 @@
         </div>
     </div>
 
+    <div class="db-panel">
+        <div class="db-header">
+            Database Viewer
+        </div>
+        <div class="db-content" id="dbContent">
+            <div class="db-section">
+                <h3>Volunteers</h3>
+                <table class="db-table" id="volunteersTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            
+            <div class="db-section">
+                <h3>Deliveries</h3>
+                <table class="db-table" id="deliveriesTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Kitchen</th>
+                            <th>Driver 1</th>
+                            <th>Driver 2</th>
+                            <th>Packer 1</th>
+                            <th>Packer 2</th>
+                            <th>Packer 3</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            
+            <div class="db-section">
+                <h3>Kitchens</h3>
+                <table class="db-table" id="kitchensTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Contact</th>
+                            <th>Phone</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <script>
+        let dbStateBefore = null;
+        
+        async function loadDbState() {
+            try {
+                const response = await fetch('/api/db-state');
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Error loading DB state:', error);
+                return null;
+            }
+        }
+        
+        function renderDbTables(volunteers, deliveries, kitchens) {
+            // Render volunteers table
+            const volunteersBody = document.querySelector('#volunteersTable tbody');
+            volunteersBody.innerHTML = '';
+            volunteers.forEach(volunteer => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${volunteer.id}</td>
+                    <td>${volunteer.name}</td>
+                    <td>${volunteer.email}</td>
+                    <td>${volunteer.phone || '-'}</td>
+                `;
+                volunteersBody.appendChild(row);
+            });
+            
+            // Render deliveries table
+            const deliveriesBody = document.querySelector('#deliveriesTable tbody');
+            deliveriesBody.innerHTML = '';
+            deliveries.forEach(delivery => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${delivery.delivery_date}</td>
+                    <td>${delivery.kitchen_name || '-'}</td>
+                    <td>${delivery.driver1_name || '-'}</td>
+                    <td>${delivery.driver2_name || '-'}</td>
+                    <td>${delivery.packer1_name || '-'}</td>
+                    <td>${delivery.packer2_name || '-'}</td>
+                    <td>${delivery.packer3_name || '-'}</td>
+                `;
+                deliveriesBody.appendChild(row);
+            });
+            
+            // Render kitchens table
+            const kitchensBody = document.querySelector('#kitchensTable tbody');
+            kitchensBody.innerHTML = '';
+            kitchens.forEach(kitchen => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${kitchen.name}</td>
+                    <td>${kitchen.type}</td>
+                    <td>${kitchen.contact_person || '-'}</td>
+                    <td>${kitchen.phone || '-'}</td>
+                `;
+                kitchensBody.appendChild(row);
+            });
+        }
+        
+        function showQueryResult(sqlQuery) {
+            const dbContent = document.getElementById('dbContent');
+            
+            // Remove previous query displays
+            const existingLabel = dbContent.querySelector('.query-label');
+            if (existingLabel) existingLabel.remove();
+            
+            const existingQuery = dbContent.querySelector('.query-display');
+            if (existingQuery) existingQuery.remove();
+            
+            // Show SQL query label
+            const labelDiv = document.createElement('div');
+            labelDiv.className = 'query-label';
+            labelDiv.textContent = 'Latest SQL Command';
+            dbContent.insertBefore(labelDiv, dbContent.firstChild);
+            
+            // Show SQL query
+            const queryDiv = document.createElement('div');
+            queryDiv.className = 'query-display';
+            queryDiv.textContent = sqlQuery;
+            dbContent.insertBefore(queryDiv, labelDiv.nextSibling);
+        }
+        
         async function sendMessage() {
             const messageInput = document.getElementById('messageInput');
             const emailInput = document.getElementById('emailInput');
@@ -173,6 +407,9 @@
                 alert('Please enter both your email and message');
                 return;
             }
+            
+            // Capture DB state before operation
+            dbStateBefore = await loadDbState();
             
             // Add user message to chat
             addMessage(message, 'user');
@@ -193,19 +430,27 @@
                 
                 const data = await response.json();
                 
+                // Get DB state after operation
+                const dbStateAfter = await loadDbState();
+                
+                // Update DB tables display
+                if (dbStateAfter) {
+                    renderDbTables(dbStateAfter.volunteers, dbStateAfter.deliveries, dbStateAfter.kitchens);
+                }
+                
+                // Show query result in DB panel
+                if (data.sqlQuery) {
+                    showQueryResult(data.sqlQuery);
+                }
+                
                 // Add AI response
                 let aiResponse = data.response;
-                
-                // Show SQL query if available
-                if (data.sqlQuery) {
-                    addSqlPreview(data.sqlQuery);
-                }
                 
                 if (data.executionResult) {
                     if (data.executionResult.error) {
                         aiResponse += `\n\nError: ${data.executionResult.error}`;
                     } else {
-                        aiResponse += `\n\nDone! ${JSON.stringify(data.executionResult)}`;
+                        aiResponse += `\n\nOperation completed successfully!`;
                     }
                 }
                 
@@ -244,8 +489,15 @@
             }
         }
         
-        // Auto-focus message input
+        // Auto-focus message input and load initial DB state
         document.getElementById('messageInput').focus();
+        
+        // Load initial database state
+        loadDbState().then(dbState => {
+            if (dbState) {
+                renderDbTables(dbState.volunteers, dbState.deliveries, dbState.kitchens);
+            }
+        });
     </script>
 </body>
 </html> 

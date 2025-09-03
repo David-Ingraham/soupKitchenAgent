@@ -37,7 +37,18 @@ db.serialize(() => {
         db.run('INSERT INTO volunteers (name, email, phone) VALUES (?, ?, ?)', volunteer);
     });
 
-    // Create some upcoming delivery dates (next few Saturdays)
+    // Insert sample kitchens
+    const kitchens = [
+        ['Manhattan Community Kitchen', '123 Main St, Manhattan, NY', 'Maria Garcia', '212-555-0101', 'maria@mck.org', 'soup kitchen'],
+        ['Bronx Food Pantry', '456 Grand Ave, Bronx, NY', 'James Wilson', '718-555-0102', 'james@bfp.org', 'food pantry'],
+        ['East Harlem Community Center', '789 Lexington Ave, Manhattan, NY', 'Lisa Chen', '212-555-0103', 'lisa@ehcc.org', 'community center']
+    ];
+    
+    kitchens.forEach(kitchen => {
+        db.run('INSERT INTO kitchens (name, address, contact_person, phone, email, type) VALUES (?, ?, ?, ?, ?, ?)', kitchen);
+    });
+
+    // Create some upcoming delivery dates (next few Saturdays) with kitchen assignments
     const today = new Date();
     const nextSaturday = new Date(today);
     nextSaturday.setDate(today.getDate() + (6 - today.getDay()));
@@ -46,8 +57,9 @@ db.serialize(() => {
         const deliveryDate = new Date(nextSaturday);
         deliveryDate.setDate(nextSaturday.getDate() + (i * 7));
         const dateStr = deliveryDate.toISOString().split('T')[0];
+        const kitchenId = (i % 3) + 1; // Rotate between the 3 kitchens
         
-        db.run('INSERT INTO deliveries (delivery_date) VALUES (?)', [dateStr]);
+        db.run('INSERT INTO deliveries (delivery_date, destination_kitchen_id) VALUES (?, ?)', [dateStr, kitchenId]);
     }
     
     console.log('Sample data inserted successfully');
