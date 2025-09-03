@@ -101,6 +101,17 @@
             padding: 10px;
             color: #6b7280;
         }
+        
+        .sql-preview {
+            background: #1f2937;
+            color: #10b981;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin: 10px 0;
+            border-left: 4px solid #10b981;
+        }
     </style>
 </head>
 <body>
@@ -184,6 +195,12 @@
                 
                 // Add AI response
                 let aiResponse = data.response;
+                
+                // Show SQL query if available
+                if (data.sqlQuery) {
+                    addSqlPreview(data.sqlQuery);
+                }
+                
                 if (data.executionResult) {
                     if (data.executionResult.error) {
                         aiResponse += `\n\nError: ${data.executionResult.error}`;
@@ -209,6 +226,15 @@
             messageDiv.className = `message ${sender}-message`;
             messageDiv.textContent = text;
             chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        function addSqlPreview(sqlQuery) {
+            const chatContainer = document.getElementById('chatContainer');
+            const sqlDiv = document.createElement('div');
+            sqlDiv.className = 'sql-preview';
+            sqlDiv.textContent = `SQL: ${sqlQuery}`;
+            chatContainer.appendChild(sqlDiv);
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
         

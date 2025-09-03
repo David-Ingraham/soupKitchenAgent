@@ -1,0 +1,8 @@
+package-lock.json
+node_modules
+database/volunteer_system.db
+
+package.json
+.env
+
+notes.txt

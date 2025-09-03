@@ -175,6 +175,9 @@ function assignVolunteerToDelivery(deliveryId, volunteerId, role, resolve, rejec
 app.post('/api/chat', async (req, res) => {
     try {
         const { message, userEmail } = req.body;
+        console.log(`\n=== CHAT MESSAGE ===`);
+        console.log(`User: ${userEmail}`);
+        console.log(`Message: ${message}`);
         
         // Get current database state for context
         const volunteers = await DatabaseTools.getVolunteers();
@@ -201,35 +204,48 @@ Format function calls as: FUNCTION_CALL: functionName(param1, param2)
 Examples:
 - "I want to drive on Saturday" → FUNCTION_CALL: signupVolunteer("${userEmail}", "2024-01-20", "driver")
 - "Cancel my packing on the 15th" → FUNCTION_CALL: cancelVolunteer("${userEmail}", "2024-01-15")
-- "Register me as Sarah Jones" → FUNCTION_CALL: addVolunteer("Sarah Jones", "${userEmail}", null)`;
+- "Register me as Sarah Jones" → FUNCTION_CALL: addVolunteer("Sarah Jones", "${userEmail}", null)
+- "Show me the schedule" or "What volunteers are scheduled" → FUNCTION_CALL: getDeliveries()`;
 
         const result = await model.generateContent(systemPrompt);
         const response = result.response.text();
+        console.log(`AI Response: ${response}`);
         
         // Parse and execute function calls
         let executionResult = null;
+        let sqlQuery = null;
         if (response.includes('FUNCTION_CALL:')) {
             const functionMatch = response.match(/FUNCTION_CALL:\s*(\w+)\((.*?)\)/);
             if (functionMatch) {
                 const [, functionName, paramsStr] = functionMatch;
                 const params = paramsStr.split(',').map(p => p.trim().replace(/"/g, ''));
                 
+                console.log(`\n=== EXECUTING FUNCTION ===`);
+                console.log(`Function: ${functionName}(${params.join(', ')})`);
+                
                 try {
                     switch (functionName) {
                         case 'addVolunteer':
+                            sqlQuery = `INSERT INTO volunteers (name, email, phone) VALUES ('${params[0]}', '${params[1]}', '${params[2] || 'NULL'}')`;
                             executionResult = await DatabaseTools.addVolunteer(...params);
                             break;
                         case 'signupVolunteer':
+                            sqlQuery = `UPDATE deliveries SET [role]_id = (SELECT id FROM volunteers WHERE email = '${params[0]}') WHERE delivery_date = '${params[1]}'`;
                             executionResult = await DatabaseTools.signupVolunteer(...params);
                             break;
                         case 'cancelVolunteer':
+                            sqlQuery = `UPDATE deliveries SET driver1_id = NULL, driver2_id = NULL, packer1_id = NULL, packer2_id = NULL, packer3_id = NULL WHERE delivery_date = '${params[1]}' AND volunteer = '${params[0]}'`;
                             executionResult = await DatabaseTools.cancelVolunteer(...params);
                             break;
                         case 'getDeliveries':
+                            sqlQuery = `SELECT d.*, v1.name as driver1_name, v2.name as driver2_name FROM deliveries d LEFT JOIN volunteers v1 ON d.driver1_id = v1.id`;
                             executionResult = await DatabaseTools.getDeliveries();
                             break;
                     }
+                    console.log(`SQL Query: ${sqlQuery}`);
+                    console.log(`Result:`, executionResult);
                 } catch (dbError) {
+                    console.log(`Database Error: ${dbError.message}`);
                     executionResult = { error: dbError.message };
                 }
             }
@@ -237,7 +253,8 @@ Examples:
         
         res.json({ 
             response: response.replace(/FUNCTION_CALL:.*/, '').trim(),
-            executionResult 
+            executionResult,
+            sqlQuery 
         });
         
     } catch (error) {
