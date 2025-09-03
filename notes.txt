@@ -12,3 +12,25 @@ tools/
 ├── webSearch.js       // Search for stores/kitchens (if needed as separate tool)
 ├── calendarManager.js // Manage delivery schedules
 └── volunteerManager.js // Handle volunteer assignments
+
+
+
+after the three table for delivery jobs, and for volunterers, then 
+
+What We'd Add Later
+Phase 2 - Locations & Details:
+pickup_locations table (grocery stores)
+delivery_locations table (food kitchens)
+Add location foreign keys to delivery_jobs
+Phase 3 - Operations:
+delivery_routes (connecting pickups to drop-offs)
+Job status tracking (planned → confirmed → completed)
+Time slots and scheduling details
+Phase 4 - Outreach:
+Store/kitchen contact tracking
+Email outreach logs
+Partnership status
+Phase 5 - Analytics:
+Volunteer performance/reliability
+Food quantity tracking
+Impact metrics
