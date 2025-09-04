@@ -192,7 +192,6 @@ class DatabaseTools {
                 JOIN events e ON r.event_id = e.id
                 JOIN volunteers v ON r.driver_volunteer_id = v.id
                 JOIN kitchens k ON r.destination_kitchen_id = k.id
-                WHERE e.event_date >= date('now')
                 ORDER BY e.event_date, v.name
             `;
             db.all(query, (err, rows) => {
