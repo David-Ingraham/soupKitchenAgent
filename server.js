@@ -26,17 +26,65 @@ if (!fs.existsSync(dbDir)) {
 
 const db = new sqlite3.Database(dbPath);
 
-// Initialize database if tables don't exist
-db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='volunteers'", (err, row) => {
-    if (err) {
-        console.error('Database check error:', err);
-    } else if (!row) {
-        console.log('Database not initialized. Running init script...');
-        require('./database/init.js');
-    } else {
-        console.log('Database already initialized.');
-    }
-});
+// Initialize database synchronously if tables don't exist
+function initializeDatabase() {
+    return new Promise((resolve, reject) => {
+        db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='volunteers'", (err, row) => {
+            if (err) {
+                console.error('Database check error:', err);
+                reject(err);
+            } else if (!row) {
+                console.log('Database not initialized. Creating tables and sample data...');
+                // Run initialization directly with our db connection
+                const schemaSQL = fs.readFileSync(path.join(__dirname, 'database', 'schema.sql'), 'utf8');
+                db.exec(schemaSQL, (err) => {
+                    if (err) {
+                        console.error('Schema creation error:', err);
+                        reject(err);
+                    } else {
+                        // Insert sample data
+                        const sampleData = `
+                        INSERT INTO volunteers (name, email, phone) VALUES 
+                        ('John Smith', 'john@email.com', '555-0101'),
+                        ('Sarah Johnson', 'sarah@email.com', '555-0102'),
+                        ('Mike Wilson', 'mike@email.com', '555-0103'),
+                        ('Lisa Brown', 'lisa@email.com', '555-0104');
+
+                        INSERT INTO kitchens (name, address, contact_person, phone, email, type, active) VALUES 
+                        ('Harlem Kitchen', '123 Harlem Ave, New York, NY', 'Maria Garcia', '555-0201', 'maria@harlemkitchen.org', 'soup_kitchen', 1),
+                        ('Bronx Community Center', '456 Bronx Blvd, Bronx, NY', 'David Martinez', '555-0202', 'david@bronxcc.org', 'community_center', 1),
+                        ('Manhattan Food Hub', '789 Manhattan St, New York, NY', 'Jennifer Lee', '555-0203', 'jennifer@manhattanfood.org', 'food_pantry', 1);
+
+                        INSERT INTO events (event_date, status, notes) VALUES 
+                        ('2024-01-13', 'scheduled', 'First delivery of the year'),
+                        ('2024-01-27', 'scheduled', 'Second delivery'),
+                        ('2024-02-10', 'scheduled', 'Valentine delivery');
+
+                        INSERT INTO event_volunteers (event_id, volunteer_id, role) VALUES 
+                        (1, 1, 'driver'), (1, 2, 'packer'), (1, 3, 'both');
+
+                        INSERT INTO routes (event_id, driver_volunteer_id, destination_kitchen_id, status) VALUES 
+                        (1, 1, 1, 'planned'), (1, 3, 2, 'planned');
+                        `;
+                        
+                        db.exec(sampleData, (err) => {
+                            if (err) {
+                                console.error('Sample data error:', err);
+                                reject(err);
+                            } else {
+                                console.log('Database initialization completed successfully!');
+                                resolve();
+                            }
+                        });
+                    }
+                });
+            } else {
+                console.log('Database already initialized.');
+                resolve();
+            }
+        });
+    });
+}
 
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -514,6 +562,17 @@ app.get('/api/db-state', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-}); 
+// Start server after database initialization
+async function startServer() {
+    try {
+        await initializeDatabase();
+        app.listen(PORT, () => {
+            console.log(`Server running on http://localhost:${PORT}`);
+        });
+    } catch (error) {
+        console.error('Failed to initialize database:', error);
+        process.exit(1);
+    }
+}
+
+startServer(); 
