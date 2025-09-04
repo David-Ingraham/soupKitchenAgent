@@ -56,9 +56,9 @@ function initializeDatabase() {
                         ('Manhattan Food Hub', '789 Manhattan St, New York, NY', 'Jennifer Lee', '555-0203', 'jennifer@manhattanfood.org', 'food_pantry', 1);
 
                         INSERT INTO events (event_date, status, notes) VALUES 
-                        ('2024-01-13', 'scheduled', 'First delivery of the year'),
-                        ('2024-01-27', 'scheduled', 'Second delivery'),
-                        ('2024-02-10', 'scheduled', 'Valentine delivery');
+                        ('2025-01-11', 'scheduled', 'First delivery of the year'),
+                        ('2025-01-25', 'scheduled', 'Second delivery'),
+                        ('2025-02-08', 'scheduled', 'Valentine delivery');
 
                         INSERT INTO event_volunteers (event_id, volunteer_id, role) VALUES 
                         (1, 1, 'driver'), (1, 2, 'packer'), (1, 3, 'both');
