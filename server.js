@@ -37,11 +37,13 @@ function initializeDatabase() {
                 console.log('Database not initialized. Creating tables and sample data...');
                 // Run initialization directly with our db connection
                 const schemaSQL = fs.readFileSync(path.join(__dirname, 'database', 'schema.sql'), 'utf8');
+                console.log('📋 Creating database schema...');
                 db.exec(schemaSQL, (err) => {
                     if (err) {
-                        console.error('Schema creation error:', err);
+                        console.error('❌ Schema creation error:', err);
                         reject(err);
                     } else {
+                        console.log('✅ Database schema created successfully!');
                         // Insert sample data
                         const sampleData = `
                         INSERT INTO volunteers (name, email, phone) VALUES 
@@ -67,13 +69,29 @@ function initializeDatabase() {
                         (1, 1, 1, 'planned'), (1, 3, 2, 'planned');
                         `;
                         
-                        db.exec(sampleData, (err) => {
-                            if (err) {
-                                console.error('Sample data error:', err);
-                                reject(err);
-                            } else {
-                                console.log('Database initialization completed successfully!');
-                                resolve();
+                        // Split and execute each INSERT statement separately for better error tracking
+                        const statements = sampleData.split(';').filter(stmt => stmt.trim());
+                        let completedStatements = 0;
+                        
+                        statements.forEach((statement, index) => {
+                            const trimmedStmt = statement.trim();
+                            if (trimmedStmt) {
+                                console.log(`Executing statement ${index + 1}: ${trimmedStmt.substring(0, 50)}...`);
+                                db.run(trimmedStmt, function(err) {
+                                    if (err) {
+                                        console.error(`ERROR in statement ${index + 1}:`, err);
+                                        console.error(`Failed statement: ${trimmedStmt}`);
+                                        reject(err);
+                                    } else {
+                                        console.log(`✅ Statement ${index + 1} completed successfully. Changes: ${this.changes}, Last ID: ${this.lastID}`);
+                                        completedStatements++;
+                                        
+                                        if (completedStatements === statements.length) {
+                                            console.log('🎉 All sample data inserted successfully!');
+                                            resolve();
+                                        }
+                                    }
+                                });
                             }
                         });
                     }
