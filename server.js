@@ -17,7 +17,26 @@ app.use(express.static('public'));
 
 // Database connection
 const dbPath = path.join(__dirname, 'database', 'volunteer_system.db');
+
+// Create database directory if it doesn't exist
+const dbDir = path.dirname(dbPath);
+if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir, { recursive: true });
+}
+
 const db = new sqlite3.Database(dbPath);
+
+// Initialize database if tables don't exist
+db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='volunteers'", (err, row) => {
+    if (err) {
+        console.error('Database check error:', err);
+    } else if (!row) {
+        console.log('Database not initialized. Running init script...');
+        require('./database/init.js');
+    } else {
+        console.log('Database already initialized.');
+    }
+});
 
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -229,22 +248,32 @@ class DatabaseTools {
     }
 
     // Assign driver to route
-    static assignDriverRoute(volunteerEmail, eventId, kitchenId) {
+    static assignDriverRoute(volunteerEmail, eventId, kitchenNameOrId) {
         return new Promise((resolve, reject) => {
             // Find the volunteer
             db.get('SELECT id FROM volunteers WHERE email = ?', [volunteerEmail], (err, volunteer) => {
                 if (err) return reject(err);
                 if (!volunteer) return reject(new Error('Volunteer not found'));
 
-                // Create route assignment
-                db.run(
-                    'INSERT INTO routes (event_id, driver_volunteer_id, destination_kitchen_id) VALUES (?, ?, ?)',
-                    [eventId, volunteer.id, kitchenId],
-                    function(err) {
-                        if (err) reject(err);
-                        else resolve({ id: this.lastID, eventId, volunteerId: volunteer.id, kitchenId });
-                    }
-                );
+                // Find the kitchen (by name or ID)
+                const kitchenQuery = isNaN(kitchenNameOrId) ? 
+                    'SELECT id FROM kitchens WHERE name = ?' : 
+                    'SELECT id FROM kitchens WHERE id = ?';
+                
+                db.get(kitchenQuery, [kitchenNameOrId], (err, kitchen) => {
+                    if (err) return reject(err);
+                    if (!kitchen) return reject(new Error('Kitchen not found'));
+
+                    // Create route assignment
+                    db.run(
+                        'INSERT INTO routes (event_id, driver_volunteer_id, destination_kitchen_id) VALUES (?, ?, ?)',
+                        [eventId, volunteer.id, kitchen.id],
+                        function(err) {
+                            if (err) reject(err);
+                            else resolve({ id: this.lastID, eventId, volunteerId: volunteer.id, kitchenId: kitchen.id });
+                        }
+                    );
+                });
             });
         });
     }
@@ -373,9 +402,13 @@ CRITICAL:
         let executionResult = null;
         let sqlQuery = null;
         if (response.includes('FUNCTION_CALL:')) {
-            const functionMatch = response.match(/FUNCTION_CALL:\s*(\w+)\((.*?)\)/);
-            if (functionMatch) {
-                const [, functionName, paramsStr] = functionMatch;
+            // Find ALL function calls in the response
+            const functionMatches = response.matchAll(/FUNCTION_CALL:\s*(\w+)\((.*?)\)/g);
+            const results = [];
+            const queries = [];
+            
+            for (const match of functionMatches) {
+                const [, functionName, paramsStr] = match;
                 const params = paramsStr.split(',').map(p => p.trim().replace(/"/g, ''));
                 
                 console.log(`\n=== EXECUTING FUNCTION ===`);
@@ -434,11 +467,19 @@ CRITICAL:
                     }
                     console.log(`SQL Query: ${sqlQuery}`);
                     console.log(`Result:`, executionResult);
+                    
+                    results.push(executionResult);
+                    queries.push(sqlQuery);
                 } catch (dbError) {
                     console.log(`Database Error: ${dbError.message}`);
-                    executionResult = { error: dbError.message };
+                    results.push({ error: dbError.message });
+                    queries.push('ERROR');
                 }
             }
+            
+            // Use the last successful result and query for the response
+            executionResult = results[results.length - 1];
+            sqlQuery = queries[queries.length - 1];
         }
         
         res.json({ 
