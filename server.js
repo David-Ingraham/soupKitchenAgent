@@ -148,7 +148,6 @@ class DatabaseTools {
                     COUNT(ev.id) as total_volunteers
                 FROM events e
                 LEFT JOIN event_volunteers ev ON e.id = ev.event_id
-                WHERE e.event_date >= date('now')
                 GROUP BY e.id, e.event_date, e.status, e.notes
                 ORDER BY e.event_date
             `;
