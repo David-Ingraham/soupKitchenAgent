@@ -48,19 +48,31 @@ db.serialize(() => {
         db.run('INSERT INTO kitchens (name, address, contact_person, phone, email, type) VALUES (?, ?, ?, ?, ?, ?)', kitchen);
     });
 
-    // Create some upcoming delivery dates (next few Saturdays) with kitchen assignments
+    // Create upcoming bi-weekly Saturday events
     const today = new Date();
     const nextSaturday = new Date(today);
     nextSaturday.setDate(today.getDate() + (6 - today.getDay()));
     
+    // Create 4 bi-weekly events (every 2 weeks)
     for (let i = 0; i < 4; i++) {
-        const deliveryDate = new Date(nextSaturday);
-        deliveryDate.setDate(nextSaturday.getDate() + (i * 7));
-        const dateStr = deliveryDate.toISOString().split('T')[0];
-        const kitchenId = (i % 3) + 1; // Rotate between the 3 kitchens
+        const eventDate = new Date(nextSaturday);
+        eventDate.setDate(nextSaturday.getDate() + (i * 14)); // Every 2 weeks
+        const dateStr = eventDate.toISOString().split('T')[0];
         
-        db.run('INSERT INTO deliveries (delivery_date, destination_kitchen_id) VALUES (?, ?)', [dateStr, kitchenId]);
+        db.run('INSERT INTO events (event_date) VALUES (?)', [dateStr]);
     }
+
+    // Add some sample volunteer signups and routes for demo
+    // Sign up John as driver for first event
+    db.run('INSERT INTO event_volunteers (event_id, volunteer_id, role) VALUES (1, 1, "driver")');
+    // Sign up Sarah as packer for first event  
+    db.run('INSERT INTO event_volunteers (event_id, volunteer_id, role) VALUES (1, 2, "packer")');
+    // Sign up Mike as both for first event
+    db.run('INSERT INTO event_volunteers (event_id, volunteer_id, role) VALUES (1, 3, "both")');
+    
+    // Create some sample routes
+    db.run('INSERT INTO routes (event_id, driver_volunteer_id, destination_kitchen_id, status) VALUES (1, 1, 1, "planned")');
+    db.run('INSERT INTO routes (event_id, driver_volunteer_id, destination_kitchen_id, status) VALUES (1, 3, 2, "planned")');
     
     console.log('Sample data inserted successfully');
     

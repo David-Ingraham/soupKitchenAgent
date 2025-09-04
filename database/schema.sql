@@ -33,23 +33,37 @@ CREATE TABLE conversation_state (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- One delivery per day with volunteer assignments
-CREATE TABLE deliveries (
+-- Events (bi-weekly Saturday food distribution)
+CREATE TABLE events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    delivery_date DATE UNIQUE NOT NULL,
-    destination_kitchen_id INTEGER,
-    driver1_id INTEGER,
-    driver2_id INTEGER,
-    packer1_id INTEGER,
-    packer2_id INTEGER,
-    packer3_id INTEGER,
+    event_date DATE UNIQUE NOT NULL,
     status TEXT DEFAULT 'open', -- open, full, completed
     notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Volunteer signups for events
+CREATE TABLE event_volunteers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_id INTEGER NOT NULL,
+    volunteer_id INTEGER NOT NULL,
+    role TEXT NOT NULL, -- 'packer', 'driver', 'both'
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (destination_kitchen_id) REFERENCES kitchens(id),
-    FOREIGN KEY (driver1_id) REFERENCES volunteers(id),
-    FOREIGN KEY (driver2_id) REFERENCES volunteers(id),
-    FOREIGN KEY (packer1_id) REFERENCES volunteers(id),
-    FOREIGN KEY (packer2_id) REFERENCES volunteers(id),
-    FOREIGN KEY (packer3_id) REFERENCES volunteers(id)
+    FOREIGN KEY (event_id) REFERENCES events(id),
+    FOREIGN KEY (volunteer_id) REFERENCES volunteers(id),
+    UNIQUE(event_id, volunteer_id)
+);
+
+-- Driver routes to specific kitchens
+CREATE TABLE routes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_id INTEGER NOT NULL,
+    driver_volunteer_id INTEGER NOT NULL,
+    destination_kitchen_id INTEGER NOT NULL,
+    status TEXT DEFAULT 'planned', -- planned, confirmed, completed
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (event_id) REFERENCES events(id),
+    FOREIGN KEY (driver_volunteer_id) REFERENCES volunteers(id),
+    FOREIGN KEY (destination_kitchen_id) REFERENCES kitchens(id)
 ); 

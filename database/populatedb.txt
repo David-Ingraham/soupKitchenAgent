@@ -1,0 +1,5 @@
+write a util script to populate the db with 100 random volunteeres and 7 more kitchesn / frigde / drop off locations. also please populate the 
+deliveries db with some of the new entries in the volunteeers table 
+
+
+

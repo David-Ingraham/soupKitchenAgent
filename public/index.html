@@ -9,7 +9,7 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin: 0;
             padding: 20px;
-            background-color: #f5f5f5;
+            background-color: #1a1a1a;
             display: flex;
             gap: 20px;
             height: 100vh;
@@ -18,9 +18,9 @@
         
         .container {
             flex: 1;
-            background: white;
+            background: #2d2d2d;
             border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -29,9 +29,9 @@
         
         .db-panel {
             flex: 1;
-            background: white;
+            background: #2d2d2d;
             border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -60,17 +60,20 @@
         }
         
         .db-table th {
-            background: #f3f4f6;
+            background: #404040;
             padding: 8px;
-            border: 1px solid #d1d5db;
+            border: 1px solid #555;
             text-align: left;
             font-weight: bold;
+            color: #e5e5e5;
         }
         
         .db-table td {
             padding: 8px;
-            border: 1px solid #d1d5db;
+            border: 1px solid #555;
             word-break: break-word;
+            color: #e5e5e5;
+            background: #3a3a3a;
         }
         
         .db-section {
@@ -79,7 +82,7 @@
         
         .db-section h3 {
             margin: 0 0 10px 0;
-            color: #374151;
+            color: #e5e5e5;
             font-size: 14px;
         }
         
@@ -97,7 +100,7 @@
         .query-label {
             font-size: 12px;
             font-weight: bold;
-            color: #374151;
+            color: #e5e5e5;
             margin: 15px 0 5px 0;
         }
         
@@ -118,7 +121,7 @@
         }
         
         .header {
-            background: #2563eb;
+            background: #1e40af;
             color: white;
             padding: 20px;
             text-align: center;
@@ -128,7 +131,7 @@
             flex: 1;
             overflow-y: auto;
             padding: 20px;
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1px solid #404040;
         }
         
         .message {
@@ -146,8 +149,8 @@
         }
         
         .ai-message {
-            background: #f3f4f6;
-            color: #374151;
+            background: #404040;
+            color: #e5e5e5;
         }
         
         .input-container {
@@ -159,17 +162,21 @@
         .email-input {
             flex: 1;
             padding: 12px;
-            border: 1px solid #d1d5db;
+            border: 1px solid #555;
             border-radius: 8px;
             font-size: 14px;
+            background: #3a3a3a;
+            color: #e5e5e5;
         }
         
         .message-input {
             flex: 2;
             padding: 12px;
-            border: 1px solid #d1d5db;
+            border: 1px solid #555;
             border-radius: 8px;
             font-size: 14px;
+            background: #3a3a3a;
+            color: #e5e5e5;
         }
         
         .send-button {
@@ -195,7 +202,7 @@
             display: none;
             text-align: center;
             padding: 10px;
-            color: #6b7280;
+            color: #9ca3af;
         }
         
         .sql-preview {
@@ -275,17 +282,30 @@
             </div>
             
             <div class="db-section">
-                <h3>Deliveries</h3>
-                <table class="db-table" id="deliveriesTable">
+                <h3>Events</h3>
+                <table class="db-table" id="eventsTable">
                     <thead>
                         <tr>
                             <th>Date</th>
+                            <th>Status</th>
+                            <th>Packers</th>
+                            <th>Drivers</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            
+            <div class="db-section">
+                <h3>Routes</h3>
+                <table class="db-table" id="routesTable">
+                    <thead>
+                        <tr>
+                            <th>Event</th>
+                            <th>Driver</th>
                             <th>Kitchen</th>
-                            <th>Driver 1</th>
-                            <th>Driver 2</th>
-                            <th>Packer 1</th>
-                            <th>Packer 2</th>
-                            <th>Packer 3</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -323,7 +343,7 @@
             }
         }
         
-        function renderDbTables(volunteers, deliveries, kitchens) {
+        function renderDbTables(volunteers, events, routes, kitchens) {
             // Render volunteers table
             const volunteersBody = document.querySelector('#volunteersTable tbody');
             volunteersBody.innerHTML = '';
@@ -338,22 +358,36 @@
                 volunteersBody.appendChild(row);
             });
             
-            // Render deliveries table
-            const deliveriesBody = document.querySelector('#deliveriesTable tbody');
-            deliveriesBody.innerHTML = '';
-            deliveries.forEach(delivery => {
+            // Render events table
+            const eventsBody = document.querySelector('#eventsTable tbody');
+            eventsBody.innerHTML = '';
+            events.forEach(event => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${delivery.delivery_date}</td>
-                    <td>${delivery.kitchen_name || '-'}</td>
-                    <td>${delivery.driver1_name || '-'}</td>
-                    <td>${delivery.driver2_name || '-'}</td>
-                    <td>${delivery.packer1_name || '-'}</td>
-                    <td>${delivery.packer2_name || '-'}</td>
-                    <td>${delivery.packer3_name || '-'}</td>
+                    <td>${event.event_date}</td>
+                    <td>${event.status}</td>
+                    <td>${event.packer_count || 0}</td>
+                    <td>${event.driver_count || 0}</td>
+                    <td>${event.total_volunteers || 0}</td>
                 `;
-                deliveriesBody.appendChild(row);
+                eventsBody.appendChild(row);
             });
+            
+            // Render routes table
+            const routesBody = document.querySelector('#routesTable tbody');
+            routesBody.innerHTML = '';
+            if (routes && routes.length > 0) {
+                routes.forEach(route => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${route.event_date}</td>
+                        <td>${route.driver_name}</td>
+                        <td>${route.kitchen_name}</td>
+                        <td>${route.status}</td>
+                    `;
+                    routesBody.appendChild(row);
+                });
+            }
             
             // Render kitchens table
             const kitchensBody = document.querySelector('#kitchensTable tbody');
@@ -435,7 +469,7 @@
                 
                 // Update DB tables display
                 if (dbStateAfter) {
-                    renderDbTables(dbStateAfter.volunteers, dbStateAfter.deliveries, dbStateAfter.kitchens);
+                    renderDbTables(dbStateAfter.volunteers, dbStateAfter.events, dbStateAfter.routes, dbStateAfter.kitchens);
                 }
                 
                 // Show query result in DB panel
@@ -449,9 +483,10 @@
                 if (data.executionResult) {
                     if (data.executionResult.error) {
                         aiResponse += `\n\nError: ${data.executionResult.error}`;
-                    } else {
-                        aiResponse += `\n\nOperation completed successfully!`;
+                    } else if (data.sqlQuery && (data.sqlQuery.includes('INSERT INTO kitchens') || data.sqlQuery.includes('INSERT INTO volunteers') || data.sqlQuery.includes('UPDATE deliveries'))) {
+                        aiResponse += `\n\nRegistration/signup completed successfully!`;
                     }
+                    // Don't show "completed successfully" for state management operations
                 }
                 
                 addMessage(aiResponse, 'ai');
@@ -495,7 +530,7 @@
         // Load initial database state
         loadDbState().then(dbState => {
             if (dbState) {
-                renderDbTables(dbState.volunteers, dbState.deliveries, dbState.kitchens);
+                renderDbTables(dbState.volunteers, dbState.events, dbState.routes, dbState.kitchens);
             }
         });
     </script>
